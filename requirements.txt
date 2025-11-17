@@ -1,0 +1,17 @@
+numpy
+pandas
+scipy
+joblib
+tqdm
+regex
+tokenizers
+transformers
+rapidfuzz
+gradio
+fastapi
+uvicorn[standard]
+matplotlib
+pytest
+black
+ruff
+pre-commit
