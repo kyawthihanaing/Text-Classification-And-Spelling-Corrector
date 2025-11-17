@@ -9,19 +9,6 @@ __pycache__/
 report/figures/
 report/tables/
 
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv/
-.env/
-Scripts/
-Lib/
-Include/
-pyvenv.cfg
-pip-log.txt
-pip-delete-this-directory.txt
-
 # Python
 *.py[cod]
 *$py.class
