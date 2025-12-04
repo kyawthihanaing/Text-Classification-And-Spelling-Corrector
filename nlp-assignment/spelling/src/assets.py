@@ -1,21 +1,52 @@
 from pathlib import Path
 import json
-PROC = Path("spelling/data/processed")
+import os
 
-def load_symspell_words(path=PROC/"symspell_dict.txt"):
+# Get the directory where this module is located, then navigate to data/processed
+_MODULE_DIR = Path(__file__).parent  # spelling/src/
+PROC = _MODULE_DIR.parent / "data" / "processed"  # spelling/data/processed/
+
+def load_symspell_words(path=None):
+    if path is None:
+        path = PROC / "symspell_dict.txt"
     words = []
+    
+    if not os.path.exists(path):
+        print(f"⚠️ Error: Could not find {path}")
+        return []
+
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            w = line.strip().split()[0]
-            if w:
+            parts = line.strip().split()
+            if parts:
+                w = parts[0]  # The word is the first part
                 words.append(w)
     return words
 
-def load_vocab(path=PROC/"vocab_conservative.json"):
+def load_vocab(path=None):
+    if path is None:
+        path = PROC / "vocab_conservative.json"
+    
+    # Load base vocabulary
     with open(path, "r", encoding="utf-8") as f:
-        return set(json.load(f))
+        vocab = set(json.load(f))
 
-def load_word_freq(path=PROC/"word_freq.txt"):
+    # Merge symspell
+    try:
+        sym_words = load_symspell_words()
+        if sym_words:
+            vocab.update(sym_words)
+            print(f"✅ Vocabulary loaded: {len(vocab)} words (merged sources)")
+        else:
+            print("⚠️ Warning: SymSpell dict was empty or not found.")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not merge symspell dict: {e}")
+
+    return vocab
+
+def load_word_freq(path=None):
+    if path is None:
+        path = PROC / "word_freq.txt"
     freq = {}
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
@@ -23,15 +54,17 @@ def load_word_freq(path=PROC/"word_freq.txt"):
             if not line:
                 continue
             parts = line.split()
-            if len(parts) == 2:
-                a, b = parts
+            if len(parts) >= 2:  # Check len to avoid errors
+                a, b = parts[0], parts[1]
                 if a.isdigit():
                     freq[b] = int(a)
                 elif b.isdigit():
                     freq[a] = int(b)
     return freq
 
-def load_trigrams(path=PROC/"trigrams.json"):
+def load_trigrams(path=None):
+    if path is None:
+        path = PROC / "trigrams.json"
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -82,6 +115,48 @@ def load_technical_vocabularies():
         "iterator", "pointer", "reference", "memory", "allocation", "deallocation"
     }
     tech_vocab["technical"] = technical_terms
+    
+    # Common words that may be missing from base vocabulary
+    common_missing = {
+        "officer", "police", "detective", "sergeant", "captain", "lieutenant",
+        "mayor", "governor", "president", "minister", "chancellor",
+        "clam", "calm", "salmon", "shrimp", "lobster", "crab", "oyster",
+        "attorney", "lawyer", "judge", "prosecutor", "defendant", "plaintiff",
+        "museum", "gallery", "exhibit", "artifact", "sculpture", "painting",
+        "cafe", "restaurant", "bistro", "diner", "bakery", "pizzeria",
+        "smartphone", "laptop", "tablet", "desktop", "server", "router",
+        "website", "webpage", "browser", "download", "upload", "streaming",
+        # Words needed for real-word error detection (confusion pairs)
+        "sing", "sign", "singing", "signing", "sings", "signs", "sang", "signed",
+        "manger", "manager", "managers", "mangers",
+        "massage", "message", "massages", "messages", "massaging", "messaging",
+        "pubic", "public", "publicly",
+        "trail", "trial", "trails", "trials",
+        "dairy", "diary", "diaries", "dairies",
+        "desert", "dessert", "deserts", "desserts",
+        "quite", "quiet", "quietly",
+        "lose", "loose", "losing", "loosing", "lost", "losses",
+        "breath", "breathe", "breathing", "breaths",
+        "advice", "advise", "advising", "advised",
+        "principal", "principle", "principals", "principles",
+        "stationary", "stationery",
+        "complement", "compliment", "compliments", "complements",
+        "affect", "effect", "affects", "effects", "affecting", "effecting",
+        # Common words that might be missing from vocabulary
+        "wagged", "wagging", "wag", "wags",
+        "sunny", "rainy", "cloudy", "windy", "snowy", "foggy", "stormy",
+        "beautiful", "wonderful", "terrible", "horrible", "amazing", "incredible",
+        "quickly", "slowly", "quietly", "loudly", "softly", "gently",
+        "arrived", "arriving", "arrives", "arrive",
+        "contagious", "infectious", "delicious", "suspicious", "precious",
+        "tomorrow", "yesterday", "today",
+        "immediate", "immediately", "obvious", "obviously",
+        "document", "documents", "documenting", "documented",
+        "contract", "contracts", "contracting", "contracted",
+        "petition", "petitions", "petitioning", "petitioned",
+        "agreement", "agreements"
+    }
+    tech_vocab["common"] = common_missing
 
     return tech_vocab
 
@@ -97,12 +172,3 @@ def load_enhanced_vocab(base_vocab, include_technical=True):
             enhanced_vocab.update(terms)
 
     return enhanced_vocab
-
-def load_symspell_words(path=PROC/"symspell_dict.txt"):
-    words = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            w = line.strip().split()[0]
-            if w:
-                words.append(w)
-    return words

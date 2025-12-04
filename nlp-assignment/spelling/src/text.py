@@ -1,5 +1,5 @@
 # spelling/src/text.py
-import regex as re
+import re  # Use standard re module instead of regex for better compatibility
 TOK = re.compile(r"[A-Za-z]+(?:[-'][A-Za-z]+)*|\d+(?:\.\d+)?|[^\s]")
 
 def normalize(s: str) -> str:

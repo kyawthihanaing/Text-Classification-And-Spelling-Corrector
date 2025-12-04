@@ -168,6 +168,10 @@ class RealWordDetector:
             'one': ['won', 'once'],
             'won': ['one', 'win'],
             
+            # Calm/clam (common typing error)
+            'calm': ['clam', 'calms'],
+            'clam': ['calm', 'clams'],
+            
             # New/knew
             'new': ['knew', 'know'],
             'knew': ['new', 'know', 'known'],
@@ -248,6 +252,174 @@ class RealWordDetector:
             
             # Detail/Detailed - CONTEXTUAL WORD CHOICE
             'detail': ['detailed', 'details'],
+            
+            # Fine/Find family - ADDED THIS
+            'fine': ['find', 'fined'],
+            'find': ['fine', 'fined'],
+            
+            # Additional common real-word errors
+            'form': ['from', 'forms'],
+            'from': ['form', 'front'],
+            
+            # Been/being
+            'been': ['being', 'bean'],
+            'being': ['been', 'begin'],
+            
+            # Do/due
+            'do': ['due', 'does'],
+            'due': ['do', 'dew'],
+            
+            # Our/are
+            'our': ['are', 'hour'],
+            'are': ['our', 'ore'],
+            
+            # Buy/by
+            'buy': ['by', 'bye'],
+            'by': ['buy', 'bye'],
+            
+            # For/four
+            'for': ['four', 'fore'],
+            'four': ['for', 'fore'],
+            
+            # Would/wood
+            'would': ['wood', 'could'],
+            'wood': ['would', 'good'],
+            
+            # Which/witch
+            'which': ['witch', 'with'],
+            'witch': ['which', 'with'],
+            
+            # Week/weak
+            'week': ['weak', 'weeks'],
+            'weak': ['week', 'weaken'],
+            
+            # Peace/piece
+            'peace': ['piece', 'peach'],
+            'piece': ['peace', 'pieces'],
+            
+            # Plain/plane
+            'plain': ['plane', 'plains'],
+            'plane': ['plain', 'planes'],
+            
+            # Tail/tale
+            'tail': ['tale', 'tails'],
+            'tale': ['tail', 'tales'],
+            
+            # Sail/sale
+            'sail': ['sale', 'sails'],
+            'sale': ['sail', 'sales'],
+            
+            # Mail/male
+            'mail': ['male', 'mails'],
+            'male': ['mail', 'males'],
+            
+            # Waist/waste
+            'waist': ['waste', 'waists'],
+            'waste': ['waist', 'wasted'],
+            
+            # Allowed/aloud
+            'allowed': ['aloud', 'allow'],
+            'aloud': ['allowed', 'allow'],
+            
+            # Bare/bear
+            'bare': ['bear', 'barely'],
+            'bear': ['bare', 'bears'],
+            
+            # Board/bored
+            'board': ['bored', 'boards'],
+            'bored': ['board', 'boring'],
+            
+            # Ceiling/sealing
+            'ceiling': ['sealing', 'feeling'],
+            'sealing': ['ceiling', 'seals'],
+            
+            # Course/coarse
+            'course': ['coarse', 'courses'],
+            'coarse': ['course', 'coarser'],
+            
+            # Die/dye
+            'die': ['dye', 'dies'],
+            'dye': ['die', 'dyes'],
+            
+            # Fair/fare
+            'fair': ['fare', 'fairs'],
+            'fare': ['fair', 'fares'],
+            
+            # Heal/heel
+            'heal': ['heel', 'heals'],
+            'heel': ['heal', 'heels'],
+            
+            # Hole/whole
+            'hole': ['whole', 'holes'],
+            'whole': ['hole', 'wholly'],
+            
+            # Loan/lone
+            'loan': ['lone', 'loans'],
+            'lone': ['loan', 'lonely'],
+            
+            # Made/maid
+            'made': ['maid', 'make'],
+            'maid': ['made', 'maids'],
+            
+            # Pair/pear/pare
+            'pair': ['pear', 'pare', 'pairs'],
+            'pear': ['pair', 'pare', 'pears'],
+            'pare': ['pair', 'pear', 'pared'],
+            
+            # Scene/seen
+            'scene': ['seen', 'scenes'],
+            'seen': ['scene', 'see'],
+            
+            # Stake/steak
+            'stake': ['steak', 'stakes'],
+            'steak': ['stake', 'steaks'],
+            
+            # Steal/steel
+            'steal': ['steel', 'steals'],
+            'steel': ['steal', 'steels'],
+            
+            # Sun/son
+            'sun': ['son', 'suns'],
+            'son': ['sun', 'sons'],
+            
+            # Tide/tied
+            'tide': ['tied', 'tides'],
+            'tied': ['tide', 'ties'],
+            
+            # Vain/vein/vane
+            'vain': ['vein', 'vane'],
+            'vein': ['vain', 'vane', 'veins'],
+            'vane': ['vain', 'vein', 'vanes'],
+            
+            # Way/weigh
+            'way': ['weigh', 'ways'],
+            'weigh': ['way', 'weighs'],
+            
+            # Witch/which - duplicate removed
+            
+            # Wring/ring
+            'wring': ['ring', 'wrung'],
+            'ring': ['wring', 'rings'],
+            
+            # Sign/sing - common typo creating valid word
+            'sign': ['sing', 'signs', 'signed'],
+            'sing': ['sign', 'sings', 'song'],
+            
+            # Manager/manger - common typo
+            'manager': ['manger', 'managers'],
+            'manger': ['manager', 'mangers'],
+            
+            # Message/massage - common typo
+            'message': ['massage', 'messages'],
+            'massage': ['message', 'massages'],
+            
+            # Public/pubic - embarrassing typo
+            'public': ['pubic', 'publicly'],
+            'pubic': ['public'],
+            
+            # Have/of - grammatical error (could of -> could have)
+            'have': ['of', 'has', 'had'],
+            'of': ['have', 'off', 'or'],
         }
         
         # Build reverse lookup for faster checking
@@ -256,25 +428,57 @@ class RealWordDetector:
             self.all_confusion_words.add(word)
             self.all_confusion_words.update(alternatives)
     
-    def detect(self, tokens: List[str], target_index: int = None) -> List[bool]:
+    def detect(self, tokens: List[str], target_index: int = None) -> dict:
         """
-        Detect real-word errors using simple heuristics
-        If target_index is provided, only check that specific token
+        UPDATED: Returns a dictionary containing boolean flags AND compound errors
         """
-        if target_index is not None:
-            # Check only the specified token
-            results = [False] * len(tokens)
-            if 0 <= target_index < len(tokens):
-                results[target_index] = self._is_realword_error(tokens, target_index)
-            return results
+        results = {
+            'flags': [],
+            'compound_errors': []
+        }
         
-        # Check all tokens
-        results = []
-        for i, token in enumerate(tokens):
-            is_error = self._is_realword_error(tokens, i)
-            results.append(is_error)
+        # 1. Standard Real-word detection
+        if target_index is not None:
+            flags = [False] * len(tokens)
+            if 0 <= target_index < len(tokens):
+                flags[target_index] = self._is_realword_error(tokens, target_index)
+            results['flags'] = flags
+        else:
+            flags = []
+            for i, token in enumerate(tokens):
+                is_error = self._is_realword_error(tokens, i)
+                flags.append(is_error)
+            results['flags'] = flags
+
+        # 2. Compound Word Check (The Fix for "Data base")
+        if target_index is None:  # Only run on full sentence analysis
+            results['compound_errors'] = self.check_compound_errors(tokens)
             
         return results
+    
+    def check_compound_errors(self, tokens: List[str]) -> List[Tuple[int, str]]:
+        """
+        Checks for split words that should be one (e.g., "data base" -> "database")
+        """
+        suggestions = []
+        for i in range(len(tokens) - 1):
+            w1 = tokens[i].lower()
+            w2 = tokens[i+1].lower()
+            
+            if not w1.isalpha() or not w2.isalpha():
+                continue
+                
+            combined = w1 + w2
+            
+            # If the combined word exists and is fairly common
+            if combined in self.vocab:
+                # Check frequencies if available
+                freq_combined = self.word_freqs.get(combined, 0)
+                
+                # Heuristic: If combined is in vocab and has reasonable frequency
+                if freq_combined > 0:
+                    suggestions.append((i, f"Possible split word: '{w1} {w2}' → '{combined}'"))
+        return suggestions
     
     def _is_realword_error(self, tokens: List[str], index: int) -> bool:
         """
@@ -292,13 +496,28 @@ class RealWordDetector:
         original_token = tokens[index]
         token = original_token.strip('.,!?;:"\'-()[]{}').lower()
         
-        # Skip non-alphabetic tokens
-        if not token or not token.isalpha():
+        # Skip non-alphabetic tokens (but allow apostrophes for contractions like "it's")
+        if not token:
+            return False
+        # Check if token is mostly alphabetic (allow apostrophes)
+        alpha_chars = sum(1 for c in token if c.isalpha())
+        if alpha_chars < len(token) - 1:  # Allow at most one non-alpha char (apostrophe)
             return False
             
         # Must be a valid word to be a real-word error
         if token not in self.vocab:
             return False
+        
+        # --- FIX FOR "TO" FALSE POSITIVES ---
+        # "to" is extremely common. We only flag it if we are VERY sure.
+        if token == 'to':
+            # Check strictly restricted confusion rules first
+            context = self._get_context(tokens, index, window=2)
+            if self._advanced_confusion_detection(token, context, tokens, index):
+                return True
+            # If rules didn't trigger, ignore LM score for 'to' unless massive
+            return False
+        # ------------------------------------
         
         # Load language model if not already loaded
         if self.lm is None:
@@ -309,47 +528,74 @@ class RealWordDetector:
                 self.lm = None
         
         # Safelist of very common words that should rarely be flagged
-        common_words_safelist = {
-            'to', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 
-            'up', 'out', 'down', 'off', 'over', 'under', 'again', 'further', 'then', 'once',
-            'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each',
-            'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only',
-            'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now'
+        # These are function words that are almost never real-word errors
+        ultra_common_safelist = {
+            'the', 'and', 'or', 'but', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 
+            'up', 'out', 'down', 'off', 'over', 'under', 'again', 'further', 'once',
+            'all', 'any', 'both', 'each', 'few', 'most', 'other', 'some', 'such', 
+            'nor', 'not', 'only', 'own', 'same', 'so', 'very', 'can', 'will', 'just', 'should',
+            'fun', 'good', 'bad', 'new', 'old', 'big', 'small', 'long', 'short', 'high', 'low',
+            'great', 'first', 'last', 'next', 'best', 'worst', 'right', 'wrong', 'true', 'false'
         }
         
-        # Skip very common words unless there's strong contextual evidence
-        if token in common_words_safelist:
-            confidence_threshold = 2.5  # Higher threshold for common words
+        # Words that are commonly confused but need careful handling
+        careful_confusion_words = {
+            'to', 'too', 'two', 'there', 'their', 'your', 'its', 'then', 'than',
+            'here', 'hear', 'no', 'know', 'now', 'where', 'wear', 'were'
+        }
+        
+        # Set thresholds based on word type
+        if token in ultra_common_safelist:
+            confidence_threshold = 3.0  # Very high threshold for ultra-common words
+        elif token in careful_confusion_words:
+            confidence_threshold = 2.0  # Moderate threshold for confusion words
         else:
-            confidence_threshold = 1.8  # Slightly increased threshold for better precision
+            confidence_threshold = 1.5  # Lower threshold for other words (more sensitive)
         
         # Multi-technique analysis
         error_score = 0
         
-        # 1. Language model probability analysis
-        if self.lm:
-            lm_score = self._analyze_language_model_probability(tokens, index)
-            error_score += lm_score
+        # Track if this confusion word's ALTERNATIVE would be wrong in context
+        # (meaning this word is likely CORRECT)
+        alternative_would_be_wrong = False
         
-        # 2. Enhanced confusion pair detection (most reliable indicator)
+        # 2. Enhanced confusion pair detection (most reliable indicator) - CHECK FIRST
         if token in self.all_confusion_words:
             context = self._get_context(tokens, index, window=3)
             if self._advanced_confusion_detection(token, context, tokens, index):
-                # Be more conservative with common words
-                if token in common_words_safelist:
-                    error_score += 1.5  # Lower weight for common words
+                # Strong indicator when context rules match
+                if token in ultra_common_safelist:
+                    error_score += 2.0  # Still significant for ultra-common
+                elif token in careful_confusion_words:
+                    error_score += 2.5  # Strong for confusion words
                 else:
-                    error_score += 2.5  # Strong indicator - increased weight
+                    error_score += 3.0  # Very strong for other words
+            else:
+                # Check if the ALTERNATIVE word would be wrong in this context
+                # If so, the current word is likely correct
+                if token in self.confusion_pairs:
+                    for alt in self.confusion_pairs[token]:
+                        if self._advanced_confusion_detection(alt, context, tokens, index):
+                            # Alternative would be wrong here, so current word is correct
+                            alternative_would_be_wrong = True
+                            break
         
-        # 3. Contextual pattern analysis
+        # 1. Language model probability analysis (can contribute up to 2.0)
+        # BUT: if the alternative would be wrong in this context,
+        # we should NOT add LM penalty (LM might incorrectly prefer an alternative)
+        if self.lm and not alternative_would_be_wrong:
+            lm_score = self._analyze_language_model_probability(tokens, index)
+            error_score += lm_score
+        
+        # 3. Contextual pattern analysis (up to 2.0)
         pattern_score = self._analyze_contextual_patterns(tokens, index)
         error_score += pattern_score
         
-        # 4. Frequency-based anomaly detection
+        # 4. Frequency-based anomaly detection (up to 0.8)
         freq_score = self._analyze_frequency_anomaly(token, tokens, index)
         error_score += freq_score
         
-        # 5. Grammatical consistency checking
+        # 5. Grammatical consistency checking (up to 2.0)
         grammar_score = self._analyze_grammatical_consistency(tokens, index)
         error_score += grammar_score
         
@@ -362,7 +608,10 @@ class RealWordDetector:
             error_score += 2.5  # Strong indicator of missing context
 
         # 8. Enhanced context analysis for complex real-word errors
+        # BUT: reduce score when alternative would be wrong (current word is likely correct)
         context_score = self._enhanced_context_analysis(tokens, index)
+        if alternative_would_be_wrong:
+            context_score = context_score * 0.5  # Reduce weight for validated confusion words
         error_score += context_score
 
         return error_score >= confidence_threshold
@@ -572,14 +821,14 @@ class RealWordDetector:
                 'correct_alternatives': ['quite']
             },
             
-            # Where/Wear rules
-            'wear': {
+            # Where/Wear rules - CRITICAL
+            'where': {
                 'wrong_contexts': ['wear are', 'wear is', 'wear did', 'wear do', 'wear can', 'wear you going'],
                 'correct_alternatives': ['where']
             },
-            'where': {
-                'wrong_contexts': ['where clothes', 'where shoes', 'where dress', 'where hat'],
-                'correct_alternatives': ['wear']
+            'wear': {
+                'wrong_contexts': ['wear are', 'wear is', 'wear did', 'wear do', 'wear can', 'wear you going'],
+                'correct_alternatives': ['where']
             }
         }
         
@@ -621,12 +870,14 @@ class RealWordDetector:
                 return True  # "walked threw" should be "walked through"
             if word == 'meat' and (before in ['will', 'to'] or after in ['you', 'him', 'her', 'them']):
                 return True  # "will meat you" should be "will meet you"
-            if word == 'quite' and (after in ['today', 'now', 'tonight'] or before in ['is', 'very', 'be']):
-                return True  # "is quite" should be "is quiet"
+            # Quite/quiet detection - only flag when context clearly suggests "quiet" was meant
+            # e.g., "very quite" should be "very quiet", "be quite" (imperative: be quiet!)
+            if word == 'quite' and (before in ['very', 'be'] and after not in ['a', 'an', 'the', 'good', 'bad', 'nice', 'interesting']):
+                return True  # "very quite" should be "very quiet"
             
             # NEWLY ADDED: Stronger its/it's detection
-            if word == 'its' and after in ['very', 'really', 'quite', 'so', 'too', 'not', 'been']:
-                return True  # "its very" should be "it's very"
+            if word == 'its' and after in ['very', 'really', 'quite', 'so', 'too', 'not', 'been', 'a', 'an', 'the', 'just', 'always', 'never', 'also', 'only', 'still', 'almost', 'nearly', 'hard', 'easy', 'nice', 'good', 'bad', 'great', 'important', 'clear', 'obvious']:
+                return True  # "its very/a/nice" should be "it's ..."
             
             # NEWLY ADDED: weight/wait detection
             if word == 'weight' and (before in ['please', 'will', 'must', 'should'] or after in ['for', 'until', 'here']):
@@ -690,9 +941,10 @@ class RealWordDetector:
         Get list of (index, word) tuples for real-word errors
         """
         detection_results = self.detect(tokens)
+        flags = detection_results['flags']  # Updated to handle dict return type
         realwords = []
         
-        for i, (token, is_realword) in enumerate(zip(tokens, detection_results)):
+        for i, (token, is_realword) in enumerate(zip(tokens, flags)):
             if is_realword:
                 realwords.append((i, token))
                 
@@ -733,33 +985,48 @@ class RealWordDetector:
             return 0
         
         try:
-            # Get original sentence probability
-            original_prob = self.lm.sent_logprob(tokens)
-            
-            # Test alternatives and see if any give significantly better probability
+            # Get the token we're analyzing
             token = tokens[index].lower()
+            
+            # Skip if not in confusion pairs - LM analysis is most useful for these
+            if token not in self.confusion_pairs:
+                return 0
+            
+            # Get a context window around the token
+            start = max(0, index - 3)
+            end = min(len(tokens), index + 4)
+            context_tokens = [t.lower() for t in tokens[start:end]]
+            local_index = index - start
+            
+            # Calculate original probability
+            original_prob = self.lm.score_context_window(context_tokens)
+            
+            # Test each alternative and find the best improvement
             best_improvement = 0
+            best_alternative = None
             
-            if token in self.confusion_pairs:
-                for alternative in self.confusion_pairs[token]:
-                    if alternative in self.vocab:
-                        # Create modified sentence
-                        modified_tokens = tokens.copy()
-                        modified_tokens[index] = alternative
-                        
-                        # Calculate new probability
-                        new_prob = self.lm.sent_logprob(modified_tokens)
-                        improvement = new_prob - original_prob
-                        
-                        if improvement > best_improvement:
-                            best_improvement = improvement
+            for alternative in self.confusion_pairs[token]:
+                if alternative in self.vocab:
+                    # Create modified context
+                    test_context = context_tokens.copy()
+                    test_context[local_index] = alternative
+                    
+                    # Calculate new probability
+                    new_prob = self.lm.score_context_window(test_context)
+                    improvement = new_prob - original_prob
+                    
+                    if improvement > best_improvement:
+                        best_improvement = improvement
+                        best_alternative = alternative
             
-            # If we found a significantly better alternative, current word is likely wrong
-            if best_improvement > 1.5:  # Threshold for significant improvement
+            # Score based on how much better an alternative fits
+            if best_improvement > 2.0:  # Very significant improvement
+                return 2.0
+            elif best_improvement > 1.0:  # Significant improvement
                 return 1.5
-            elif best_improvement > 0.8:
+            elif best_improvement > 0.5:  # Moderate improvement
                 return 1.0
-            elif best_improvement > 0.3:
+            elif best_improvement > 0.2:  # Small improvement
                 return 0.5
                 
         except Exception:
@@ -803,12 +1070,18 @@ class RealWordDetector:
                 'wrong_if_after': ['time', 'going', 'coming', 'about', 'over', 'done', 'finished', 'ready',
                                  'working', 'broken', 'important', 'necessary', 'possible', 'been', 'not',
                                  'very', 'really', 'quite', 'so', 'too', 'still', 'always', 'never',
-                                 'probably', 'definitely', 'certainly', 'likely']
+                                 'probably', 'definitely', 'certainly', 'likely',
+                                 'a', 'an', 'the', 'just', 'also', 'only', 'almost', 'nearly',
+                                 'hard', 'easy', 'nice', 'good', 'bad', 'great', 'clear', 'obvious',
+                                 'beautiful', 'wonderful', 'amazing', 'terrible', 'true', 'false']
             },
             'it\'s': {
+                'wrong_if_before': ['wagged', 'shook', 'lost', 'found', 'lifted', 'raised', 'dropped', 
+                                  'held', 'grabbed', 'moved', 'turned', 'showed', 'hid', 'changed'],
                 'wrong_if_after': ['own', 'value', 'meaning', 'purpose', 'function', 'design', 'color',
                                  'size', 'weight', 'length', 'width', 'height', 'tail', 'head', 'body',
-                                 'shape', 'form', 'structure', 'position', 'location', 'place']
+                                 'shape', 'form', 'structure', 'position', 'location', 'place',
+                                 'way', 'name', 'title', 'owner', 'origin', 'source', 'use', 'role']
             },
             
             # To/Too - Enhanced rules (more specific to avoid false positives)
@@ -818,7 +1091,7 @@ class RealWordDetector:
             },
             'to': {
                 'wrong_if_before': [],  # Remove overly aggressive rules
-                'wrong_if_after': ['much', 'many', 'big', 'small', 'fast', 'slow', 'hot', 'cold', 'good', 'bad', 'heavy', 'light', 'expensive', 'cheap']
+                'wrong_if_after': ['much', 'many', 'expensive', 'cheap', 'large', 'small']
             },
             
             # Then/Than - Enhanced rules
@@ -888,14 +1161,16 @@ class RealWordDetector:
                 'wrong_if_after': ['and', 'or', 'for', 'with']
             },
             
-            # Quite/Quiet - CRITICAL  
+            # Quite/Quiet - Be more careful to avoid false positives
+            # "quite" is often used correctly (quite nice, quite good)
+            # Only flag when context strongly suggests "quiet" was meant
             'quite': {
-                'wrong_if_before': ['is', 'very', 'be', 'being', 'stay', 'keep', 'remain', 'seems', 'looks'],
-                'wrong_if_after': ['place', 'room', 'area', 'spot', 'tonight', 'today', 'now']
+                'wrong_if_before': ['stay', 'keep', 'remain', 'be'],  # imperative: "be quiet!"
+                'wrong_if_after': ['place', 'room', 'area', 'spot']  # "quite room" should be "quiet room"
             },
             'quiet': {
-                'wrong_if_before': ['not', 'isn\'t', 'wasn\'t', 'aren\'t', 'weren\'t'],
-                'wrong_if_after': ['a', 'the', 'good', 'bad', 'big', 'small', 'sure']
+                'wrong_if_before': [],  # "quiet" is rarely wrong
+                'wrong_if_after': ['a', 'the', 'good', 'bad', 'big', 'small', 'sure', 'lot']
             },
             
             # Where/Wear - CRITICAL
@@ -911,6 +1186,16 @@ class RealWordDetector:
             'weight': {
                 'wrong_if_before': ['please', 'will', 'must', 'should', 'can', 'could', 'to', 'and', 'don\'t', 'won\'t', 'can\'t'],
                 'wrong_if_after': ['for', 'until', 'here', 'there', 'a', 'minute', 'moment', 'second', 'while']
+            },
+            
+            # Clam/Calm - common typo
+            'clam': {
+                'wrong_if_before': ['is', 'very', 'quite', 'stay', 'keep', 'remain', 'be', 'feel', 'felt', 'seems', 'looks'],
+                'wrong_if_after': ['down', 'and', 'waters', 'weather', 'day', 'night', 'morning', 'evening']
+            },
+            'calm': {
+                'wrong_if_before': ['a', 'the', 'eat', 'some', 'fresh', 'steamed'],
+                'wrong_if_after': ['chowder', 'sauce', 'shells']
             },
             'wait': {
                 'wrong_if_before': ['the', 'my', 'your', 'his', 'her', 'their', 'its', 'a', 'body', 'net', 'total'],
@@ -1002,6 +1287,73 @@ class RealWordDetector:
             'than': {
                 'wrong_if_before': ['and', 'but', 'first', 'now', 'back', 'since', 'until', 'just'],
                 'wrong_if_after': ['i', 'we', 'you', 'they', 'he', 'she', 'it', 'went', 'came', 'left', 'arrived']
+            },
+            
+            # Sing/Sign - common typo creating valid word
+            # NOTE: "sing" before "the/this/that" followed by document words = wrong
+            # But "can sing" alone is correct (singing ability)
+            'sing': {
+                'wrong_if_before': ['please'],  # Only "please sing" is suspicious
+                'wrong_if_after': ['the', 'this', 'that', 'your', 'my', 'his', 'her', 'our', 'their', 
+                                 'document', 'contract', 'form', 'paper', 'agreement', 'letter', 'petition', 'here']
+            },
+            'sign': {
+                'wrong_if_before': [],  # "sign" is rarely wrong as singing context
+                'wrong_if_after': ['a', 'the', 'that', 'this', 'song', 'songs', 'along', 'loudly', 'softly', 'beautifully']
+            },
+            
+            # Manager/Manger - common typo
+            'manger': {
+                'wrong_if_before': ['the', 'our', 'your', 'my', 'a', 'an', 'general', 'project', 'account', 
+                                  'product', 'sales', 'marketing', 'hr', 'office', 'store', 'branch', 'regional'],
+                'wrong_if_after': ['said', 'told', 'asked', 'called', 'approved', 'rejected', 'position', 'role', 'job']
+            },
+            'manager': {
+                'wrong_if_before': ['in', 'from', 'baby', 'nativity'],  # rare context for actual manger
+                'wrong_if_after': ['scene', 'bed']
+            },
+            
+            # Message/Massage - common typo
+            'massage': {
+                'wrong_if_before': ['the', 'a', 'your', 'my', 'his', 'her', 'this', 'that', 'send', 'sent', 
+                                  'receive', 'received', 'error', 'warning', 'text', 'email'],
+                'wrong_if_after': ['was', 'is', 'said', 'says', 'reads', 'board', 'box', 'clear']
+            },
+            'message': {
+                'wrong_if_before': ['get', 'need', 'want', 'foot', 'back', 'body', 'facial', 'spa', 'deep'],
+                'wrong_if_after': ['therapist', 'therapy', 'parlor', 'table', 'oil']
+            },
+            
+            # Public/Pubic - embarrassing typo
+            'pubic': {
+                'wrong_if_before': ['the', 'a', 'in', 'for', 'general'],
+                'wrong_if_after': ['figure', 'opinion', 'service', 'sector', 'school', 'library', 'park',
+                                 'transport', 'transportation', 'health', 'safety', 'interest', 'domain',
+                                 'speaking', 'eye', 'view', 'relations', 'affairs', 'policy', 'official']
+            },
+            'public': {
+                'wrong_if_before': [],  # public is rarely wrong
+                'wrong_if_after': ['hair', 'bone', 'area', 'region', 'symphysis']  # anatomical terms
+            },
+            
+            # Of/Have - grammatical error (could of -> could have)
+            'of': {
+                'wrong_if_before': ['could', 'would', 'should', 'must', 'might', 'may', 'will', 'can'],
+                'wrong_if_after': []  # context after doesn't matter as much
+            },
+            
+            # Tail/Tale - HOMOPHONE PAIR
+            # "tail" is correct in body part contexts, "tale" is correct for stories
+            # Only flag "tail" when it appears in story contexts
+            'tail': {
+                'wrong_if_before': ['fairy', 'folk', 'tall', 'old', 'classic', 'famous', 'short', 'long', 'sad', 'scary', 'telling'],
+                'wrong_if_after': ['of', 'about', 'was', 'is', 'tells']  # "fairy tail of..." should be "fairy tale of..."
+            },
+            # Only flag "tale" when it appears in body part contexts
+            'tale': {
+                'wrong_if_before': ['its', 'his', 'her', 'my', 'your', 'their', 'the', 'a', "dog's", "cat's", 
+                                  'wagged', 'wagging', 'wag', 'chasing'],
+                'wrong_if_after': ['wagged', 'wagging', 'wag', 'between', 'feathers', 'fur']
             }
         }
         
@@ -1009,12 +1361,14 @@ class RealWordDetector:
         if word in confusion_rules:
             rules = confusion_rules[word]
             
-            # Check wrong_if_before
+            # Check wrong_if_before - can check both positions
             if 'wrong_if_before' in rules and (before_1 in rules['wrong_if_before'] or before_2 in rules['wrong_if_before']):
                 return True
                 
-            # Check wrong_if_after
-            if 'wrong_if_after' in rules and (after_1 in rules['wrong_if_after'] or after_2 in rules['wrong_if_after']):
+            # Check wrong_if_after - ONLY check immediate next word (after_1)
+            # This prevents false positives like "Their house is big" being flagged
+            # because "is" is two words away from "their"
+            if 'wrong_if_after' in rules and after_1 in rules['wrong_if_after']:
                 return True
         
         return False
@@ -1033,23 +1387,123 @@ class RealWordDetector:
         context_window = [t.lower() for t in tokens[start:end]]  
         context_str = ' '.join(context_window)
         
-        # High-confidence error patterns
-        if 'your going' in context_str and word == 'your':
-            score += 2.0
-        elif 'there house' in context_str and word == 'there':
-            score += 2.0
-        elif 'its time' in context_str and word == 'its':
-            score += 2.0
-        elif 'will effect' in context_str and word == 'effect':
-            score += 2.0
-        elif 'loose your' in context_str and word == 'loose':
-            score += 2.0
-        elif 'break pedal' in context_str and word == 'break':
-            score += 2.0
-        elif 'more then' in context_str and word == 'then':
-            score += 2.0
-        elif 'want too go' in context_str and word == 'too':
-            score += 2.0
+        # High-confidence error patterns - comprehensive list
+        high_confidence_patterns = {
+            # Their/There/They're
+            'your': ['your going', 'your coming', 'your welcome', 'your the', 'your a'],
+            'there': ['there house', 'there car', 'there dog', 'there going', 'there coming'],
+            'their': ['their going', 'their coming', 'their is', 'their are'],
+            
+            # Its/It's
+            'its': ['its time', 'its going', 'its about', 'its been', 'its not', 'its very'],
+            
+            # Effect/Affect
+            'effect': ['will effect', 'can effect', 'may effect', 'could effect', 'should effect'],
+            'affect': ['the affect', 'an affect', 'side affect', 'affect of'],
+            
+            # Loose/Lose
+            'loose': ['loose your', 'will loose', 'might loose', 'dont loose', "don't loose"],
+            
+            # Then/Than
+            'then': ['more then', 'less then', 'better then', 'rather then', 'other then', 'greater then'],
+            
+            # Too/To
+            'too': ['want too go', 'need too', 'have too go', 'going too be', 'too go', 'too be', 'too have'],
+            'to': ['to much', 'to many', 'to big', 'to small', 'to expensive', 'to late', 'to early'],
+            
+            # Here/Hear
+            'here': ['can here', 'could here', 'will here', 'here the music', 'here them'],
+            
+            # Threw/Through
+            'threw': ['walked threw', 'went threw', 'passed threw', 'drove threw', 'ran threw'],
+            
+            # Meet/Meat
+            'meat': ['will meat', 'to meat you', 'meat him', 'meat her', 'meat them', 'lets meat'],
+            
+            # Quite/Quiet - Be careful, "quite" is often used correctly
+            # Only flag clear patterns like "be quite" (imperative) or "quite room" (missing u)
+            'quite': ['be quite', 'stay quite', 'keep quite', 'quite place', 'quite room', 'very quite'],
+            
+            # Accept/Except
+            'accept': ['everyone accept', 'all accept'],
+            'except': ['will except', 'please except', 'to except'],
+            
+            # Principle/Principal
+            'principle': ['school principle', 'the principle of', 'principle investigator'],
+            'principal': ['guiding principal', 'basic principal', 'key principal'],
+            
+            # Weather/Whether
+            'whether': ['the whether', 'nice whether', 'bad whether', 'whether forecast'],
+            'weather': ['weather or not', 'weather to', 'decide weather'],
+            
+            # New/Knew
+            'new': ['he new', 'she new', 'i new', 'they new', 'we new', 'who new'],
+            
+            # Weight/Wait
+            'weight': ['please weight', 'will weight', 'weight for', 'weight here', 'weight a minute'],
+            
+            # Break/Brake
+            'break': ['break pedal', 'press the break', 'hit the break'],
+            'brake': ['take a brake', 'need a brake', 'coffee brake'],
+            
+            # Role/Roll
+            'roll': ['crucial roll', 'important roll', 'key roll', 'vital roll', 'roll in the'],
+            
+            # Past/Passed
+            'past': ['past the test', 'past the exam', 'past away', 'past the ball'],
+            
+            # No/Know
+            'no': ['i no', 'you no', 'we no', 'they no', 'no about', 'no how', 'no what'],
+            
+            # Fine/Find
+            'fine': ['tried to fine', 'will fine', 'cant fine', "can't fine", 'to fine the'],
+            
+            # Form/From
+            'form': ['form the', 'form here', 'form now', 'form this'],
+            
+            # Advice/Advise
+            'advice': ['will advice', 'please advice', 'to advice you'],
+            'advise': ['my advise', 'your advise', 'some advise', 'good advise'],
+            
+            # Complement/Compliment
+            'complement': ['nice complement', 'great complement', 'pay a complement'],
+            'compliment': ['compliment each other', 'compliment the'],
+            
+            # Sing/Sign - common typo
+            'sing': ['please sing the', 'sing the document', 'sing the contract', 'sing the form', 
+                    'sing this', 'sing here', 'must sing', 'need to sing the'],
+            
+            # Manager/Manger - common typo
+            'manger': ['the manger', 'our manger', 'your manger', 'project manger', 'general manger',
+                      'account manger', 'store manger', 'office manger', 'manger said', 'manger told',
+                      'contact our manger', 'contact the manger', 'speak to the manger'],
+            
+            # Message/Massage - common typo
+            'massage': ['the massage was', 'your massage', 'my massage', 'error massage', 
+                       'massage says', 'massage said', 'text massage', 'send a massage', 
+                       'received a massage', 'massage clear', 'massage board'],
+            
+            # Public/Pubic - embarrassing typo
+            'pubic': ['pubic figure', 'pubic opinion', 'pubic service', 'pubic school', 
+                     'pubic library', 'pubic speaking', 'pubic health', 'pubic safety',
+                     'pubic transport', 'pubic sector', 'pubic interest', 'pubic domain',
+                     'pubic eye', 'in pubic', 'pubic relations', 'pubic affairs', 'general pubic'],
+            
+            # Of/Have - grammatical error
+            'of': ['could of', 'would of', 'should of', 'might of', 'must of', 'may of'],
+            
+            # It's/Its - reverse direction
+            "it's": ["wagged it's", "it's tail", "it's head", "it's body", "it's own", 
+                    "it's value", "lost it's", "found it's", "changed it's", "it's way",
+                    "it's name", "it's place", "it's owner", "showed it's"]
+        }
+        
+        # Check for high-confidence patterns
+        if word in high_confidence_patterns:
+            for pattern in high_confidence_patterns[word]:
+                if pattern in context_str:
+                    score += 2.0
+                    break  # Only add once per word
         
         return min(score, 2.0)
     
@@ -1076,7 +1530,7 @@ class RealWordDetector:
         return 0
     
     def _analyze_grammatical_consistency(self, tokens: List[str], index: int) -> float:
-        """Basic grammatical consistency checking"""
+        """Enhanced grammatical consistency checking"""
         if index >= len(tokens):
             return 0
             
@@ -1085,16 +1539,67 @@ class RealWordDetector:
         
         before = tokens[index-1].lower() if index > 0 else ""
         after = tokens[index+1].lower() if index < len(tokens)-1 else ""
+        before2 = tokens[index-2].lower() if index > 1 else ""
         
-        # Simple POS-based rules
-        if before in ['the', 'a', 'an', 'this', 'that'] and word == 'affect':
-            score += 1.0  # "the affect" should be "the effect"
-        elif before in ['will', 'can', 'may', 'might'] and word == 'effect':
-            score += 1.0  # "will effect" should be "will affect"
-        elif after in ['of', 'on'] and word == 'affect':
+        # Comprehensive POS-based rules
+        
+        # Effect/Affect rules
+        if before in ['the', 'a', 'an', 'this', 'that', 'any', 'some', 'no', 'side'] and word == 'affect':
+            score += 1.5  # "the affect" should be "the effect"
+        elif before in ['will', 'can', 'may', 'might', 'could', 'would', 'should', 'must'] and word == 'effect':
+            score += 1.5  # "will effect" should be "will affect"
+        elif after in ['of', 'on', 'upon'] and word == 'affect':
             score += 1.0  # "affect of" should be "effect of"
         
-        return min(score, 1.0)
+        # Modal verb + possessive patterns (indicates contraction needed)
+        modal_verbs = ['will', 'would', 'can', 'could', 'should', 'must', 'might', 'may']
+        if before in modal_verbs:
+            if word in ['your', 'their', 'its']:
+                # "will your" is unusual, might be "will you're" context
+                score += 0.5
+        
+        # Article + verb-like patterns
+        articles = ['the', 'a', 'an', 'this', 'that', 'these', 'those']
+        if before in articles:
+            verb_forms = ['affect', 'advise', 'loose', 'chose', 'lead']
+            if word in verb_forms:
+                score += 1.0
+        
+        # Pronoun + noun patterns (might need verb)
+        pronouns = ['i', 'you', 'he', 'she', 'it', 'we', 'they']
+        if before in pronouns:
+            if word in ['new', 'no', 'now', 'here', 'their', 'there']:
+                score += 1.0
+        
+        # Preposition + determiner patterns
+        prepositions = ['to', 'for', 'from', 'with', 'in', 'on', 'at', 'by']
+        if before in prepositions and word in ['much', 'many', 'big', 'small']:
+            if before == 'to':
+                score += 1.5  # "to much" should be "too much"
+        
+        # Comparative + then patterns
+        comparatives = ['more', 'less', 'better', 'worse', 'greater', 'fewer', 'larger', 'smaller', 
+                       'bigger', 'higher', 'lower', 'faster', 'slower', 'older', 'younger']
+        if before in comparatives and word == 'then':
+            score += 1.5  # "more then" should be "more than"
+        
+        # "rather" + then pattern
+        if before == 'rather' and word == 'then':
+            score += 1.5
+        
+        # Infinitive patterns that indicate wrong word
+        if before == 'to' and word in ['loose', 'effect', 'except', 'advice']:
+            score += 1.0
+        
+        # Subject + possessive patterns (should be contraction)
+        if before in pronouns and word in ['your', 'their', 'its', 'there']:
+            score += 0.8
+        
+        # "tried to fine" pattern - special case
+        if before == 'to' and word == 'fine' and before2 == 'tried':
+            score += 1.5
+        
+        return min(score, 2.0)
     
     def get_correction_suggestions(self, tokens: List[str], index: int, top_k: int = 5) -> List[Tuple[str, float]]:
         """
@@ -1149,7 +1654,6 @@ class RealWordDetector:
         before = tokens[index-1].lower() if index > 0 else ""
         after = tokens[index+1].lower() if index < len(tokens)-1 else ""
         before2 = tokens[index-2].lower() if index > 1 else ""
-        after2 = tokens[index+2].lower() if index < len(tokens)-2 else ""  # Fixed: was len(tokens)-1
         
         # ULTRA HIGH-CONFIDENCE DIRECT MATCHES (check these FIRST)
         # These are virtually guaranteed corrections
@@ -1370,6 +1874,138 @@ class RealWordDetector:
         
         return score
 
+    def _enhanced_context_analysis(self, tokens: List[str], index: int) -> float:
+        """
+        Enhanced context analysis using improved bigram/trigram analysis
+        and domain-aware confusion detection
+        """
+        if index >= len(tokens):
+            return 0.0
+
+        token = tokens[index].strip('.,!?;:"\'-()[]{}').lower()
+        score = 0.0
+
+        # Get extended context (5 words on each side for better analysis)
+        context_window = 5
+        start_idx = max(0, index - context_window)
+        end_idx = min(len(tokens), index + context_window + 1)
+        context_tokens = tokens[start_idx:end_idx]
+
+        # 1. Enhanced bigram/trigram probability analysis
+        # NOTE: Only penalize if we have strong evidence of a problem
+        # A trigram probability of 0 just means "unseen", not necessarily wrong
+        if self.lm and len(context_tokens) >= 3:
+            # Check trigram probabilities with the current token
+            trigram_scores = []
+            for i in range(max(0, index-2), min(len(context_tokens)-2, index+1)):
+                if i+2 < len(context_tokens):
+                    w1 = context_tokens[i].strip('.,!?;:"\'-()[]{}').lower()
+                    w2 = context_tokens[i+1].strip('.,!?;:"\'-()[]{}').lower()
+                    w3 = context_tokens[i+2].strip('.,!?;:"\'-()[]{}').lower()
+
+                    if all(w.isalpha() for w in [w1, w2, w3]):
+                        prob = self.lm.p_trigram(w1, w2, w3)
+                        # Only consider non-zero probabilities (0 = unseen, not wrong)
+                        if prob > 0:
+                            trigram_scores.append(prob)
+
+            # Only penalize if we have actual probability data showing the trigram is rare
+            # AND we have enough data points to be confident
+            if len(trigram_scores) >= 2:
+                avg_trigram_prob = sum(trigram_scores) / len(trigram_scores)
+                if avg_trigram_prob < 1e-10:  # Very low (but non-zero) probability
+                    score += 0.5  # Reduced penalty
+
+        # 2. Domain-aware confusion detection
+        domain_confusions = self._get_domain_specific_confusions(token, context_tokens)
+        if domain_confusions:
+            score += 1.5
+
+        # 3. Semantic coherence analysis
+        coherence_score = self._analyze_semantic_coherence(token, context_tokens)
+        score += coherence_score
+
+        # 4. Syntactic pattern analysis
+        syntactic_score = self._analyze_syntactic_patterns(tokens, index)
+        score += syntactic_score
+
+        return min(score, 2.0)
+
+    def _get_domain_specific_confusions(self, token: str, context: List[str]) -> List[str]:
+        """Detect domain-specific confusions based on context"""
+        context_text = ' '.join(context).lower()
+
+        # Medical domain confusions
+        if any(word in context_text for word in ['patient', 'doctor', 'treatment', 'diagnosis', 'symptoms']):
+            medical_confusions = {
+                'affect': ['effect'],
+                'discrete': ['discreet'],
+                'morbid': ['mortal'],
+                'acute': ['chronic'],
+            }
+            if token in medical_confusions:
+                return medical_confusions[token]
+
+        # Technical/Scientific domain confusions
+        if any(word in context_text for word in ['algorithm', 'data', 'analysis', 'method', 'results']):
+            technical_confusions = {
+                'principle': ['principal'],
+                'discrete': ['discreet'],
+                'affect': ['effect'],
+                'infer': ['imply'],
+            }
+            if token in technical_confusions:
+                return technical_confusions[token]
+
+        # Legal domain confusions
+        if any(word in context_text for word in ['court', 'law', 'legal', 'contract', 'case']):
+            legal_confusions = {
+                'affect': ['effect'],
+                'principal': ['principle'],
+                'discreet': ['discrete'],
+            }
+            if token in legal_confusions:
+                return legal_confusions[token]
+
+        return []
+
+    def _analyze_semantic_coherence(self, token: str, context: List[str]) -> float:
+        """Analyze semantic coherence of the token with its context"""
+        score = 0.0
+
+        context_freqs = [self.word_freqs.get(word.strip('.,!?;:"\'-()[]{}').lower(), 1)
+                        for word in context if word.strip('.,!?;:"\'-()[]{}').isalpha()]
+
+        token_freq = self.word_freqs.get(token, 1)
+
+        if context_freqs:
+            avg_context_freq = sum(context_freqs) / len(context_freqs)
+            if token_freq < avg_context_freq * 0.1:
+                score += 0.5
+            if token_freq > avg_context_freq * 10:
+                score += 0.3
+
+        return score
+
+    def _analyze_syntactic_patterns(self, tokens: List[str], index: int) -> float:
+        """Analyze syntactic patterns around the token"""
+        score = 0.0
+        token = tokens[index].strip('.,!?;:"\'-()[]{}').lower()
+
+        if index > 0:
+            prev_word = tokens[index-1].strip('.,!?;:"\'-()[]{}').lower()
+            if prev_word in ['to', 'with', 'for', 'in', 'on', 'at', 'by']:
+                if token in ['too', 'two', 'their', 'there', "they're"]:
+                    score += 1.0
+
+        if index < len(tokens) - 1:
+            next_word = tokens[index+1].strip('.,!?;:"\'-()[]{}').lower()
+            if next_word in ['to', 'with', 'for', 'in', 'on', 'at', 'by']:
+                if token in ['affect', 'effect', 'loose', 'lose']:
+                    score += 0.8
+
+        return score
+
 # Legacy functions for backward compatibility
 def detect_nonwords(tokens: List[str], vocab: set[str]):
     """Legacy function - use NonWordDetector class for new code"""
@@ -1397,148 +2033,6 @@ def detect_realwords(tokens: List[str], lm=None, delta_logp=2.0, candidate_fn=No
         if improved and (best - base) >= delta_logp:
             suspicious.append(i)
     return suspicious
-
-    def _enhanced_context_analysis(self, tokens: List[str], index: int) -> float:
-        """
-        Enhanced context analysis using improved bigram/trigram analysis
-        and domain-aware confusion detection
-        """
-        if index >= len(tokens):
-            return 0.0
-
-        token = tokens[index].strip('.,!?;:"\'-()[]{}').lower()
-        score = 0.0
-
-        # Get extended context (5 words on each side for better analysis)
-        context_window = 5
-        start_idx = max(0, index - context_window)
-        end_idx = min(len(tokens), index + context_window + 1)
-        context_tokens = tokens[start_idx:end_idx]
-
-        # 1. Enhanced bigram/trigram probability analysis
-        if self.lm and len(context_tokens) >= 3:
-            # Check trigram probabilities with the current token
-            trigram_scores = []
-            for i in range(max(0, index-2), min(len(context_tokens)-2, index+1)):
-                if i+2 < len(context_tokens):
-                    w1 = context_tokens[i].strip('.,!?;:"\'-()[]{}').lower()
-                    w2 = context_tokens[i+1].strip('.,!?;:"\'-()[]{}').lower()
-                    w3 = context_tokens[i+2].strip('.,!?;:"\'-()[]{}').lower()
-
-                    if all(w.isalpha() for w in [w1, w2, w3]):
-                        # Calculate trigram probability
-                        prob = self.lm.p_trigram(w1, w2, w3)
-                        trigram_scores.append(prob)
-
-            if trigram_scores:
-                avg_trigram_prob = sum(trigram_scores) / len(trigram_scores)
-                # Lower probability suggests the word might be wrong
-                if avg_trigram_prob < 1e-8:  # Very low probability threshold
-                    score += 1.0
-
-        # 2. Domain-aware confusion detection
-        domain_confusions = self._get_domain_specific_confusions(token, context_tokens)
-        if domain_confusions:
-            score += 1.5
-
-        # 3. Semantic coherence analysis
-        coherence_score = self._analyze_semantic_coherence(token, context_tokens)
-        score += coherence_score
-
-        # 4. Syntactic pattern analysis
-        syntactic_score = self._analyze_syntactic_patterns(tokens, index)
-        score += syntactic_score
-
-        return min(score, 2.0)  # Cap the score contribution
-
-    def _get_domain_specific_confusions(self, token: str, context: List[str]) -> List[str]:
-        """
-        Detect domain-specific confusions based on context
-        """
-        context_text = ' '.join(context).lower()
-
-        # Medical domain confusions
-        if any(word in context_text for word in ['patient', 'doctor', 'treatment', 'diagnosis', 'symptoms']):
-            medical_confusions = {
-                'affect': ['effect'],  # Psychology: affect vs effect
-                'discrete': ['discreet'],  # Medical terminology
-                'morbid': ['mortal'],  # Medical contexts
-                'acute': ['chronic'],  # Medical timing
-            }
-            if token in medical_confusions:
-                return medical_confusions[token]
-
-        # Technical/Scientific domain confusions
-        if any(word in context_text for word in ['algorithm', 'data', 'analysis', 'method', 'results']):
-            technical_confusions = {
-                'principle': ['principal'],  # Algorithm principles
-                'discrete': ['discreet'],  # Discrete mathematics
-                'affect': ['effect'],  # Cause/effect in research
-                'infer': ['imply'],  # Statistical inference
-            }
-            if token in technical_confusions:
-                return technical_confusions[token]
-
-        # Legal domain confusions
-        if any(word in context_text for word in ['court', 'law', 'legal', 'contract', 'case']):
-            legal_confusions = {
-                'affect': ['effect'],  # Legal effects
-                'principal': ['principle'],  # Principal in legal contexts
-                'discreet': ['discrete'],  # Discretion in law
-            }
-            if token in legal_confusions:
-                return legal_confusions[token]
-
-        return []
-
-    def _analyze_semantic_coherence(self, token: str, context: List[str]) -> float:
-        """
-        Analyze semantic coherence of the token with its context
-        """
-        score = 0.0
-
-        # Simple semantic coherence based on word frequency patterns
-        context_freqs = [self.word_freqs.get(word.strip('.,!?;:"\'-()[]{}').lower(), 1)
-                        for word in context if word.strip('.,!?;:"\'-()[]{}').isalpha()]
-
-        token_freq = self.word_freqs.get(token, 1)
-
-        if context_freqs:
-            avg_context_freq = sum(context_freqs) / len(context_freqs)
-
-            # If token frequency is much lower than context average, it might be wrong
-            if token_freq < avg_context_freq * 0.1:
-                score += 0.5
-
-            # If token frequency is much higher than context average, might also be wrong
-            if token_freq > avg_context_freq * 10:
-                score += 0.3
-
-        return score
-
-    def _analyze_syntactic_patterns(self, tokens: List[str], index: int) -> float:
-        """
-        Analyze syntactic patterns around the token
-        """
-        score = 0.0
-
-        # Check for preposition + article patterns that might indicate errors
-        if index > 0:
-            prev_word = tokens[index-1].strip('.,!?;:"\'-()[]{}').lower()
-            if prev_word in ['to', 'with', 'for', 'in', 'on', 'at', 'by']:
-                # Preposition followed by potentially wrong word
-                if token in ['too', 'two', 'their', 'there', 'they\'re']:
-                    score += 1.0
-
-        # Check for verb + preposition patterns
-        if index < len(tokens) - 1:
-            next_word = tokens[index+1].strip('.,!?;:"\'-()[]{}').lower()
-            if next_word in ['to', 'with', 'for', 'in', 'on', 'at', 'by']:
-                # Word followed by preposition - check for common errors
-                if token in ['affect', 'effect', 'loose', 'lose']:
-                    score += 0.8
-
-        return score
 
 
 class MixedErrorHandler:

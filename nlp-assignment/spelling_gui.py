@@ -42,11 +42,17 @@ class SpellingCorrectionGUI:
             self.vocab = load_vocab()
             self.word_freqs = load_word_freq()
             self.symspell_words = load_symspell_words()
-            # Enhanced: Use enhanced vocabulary with technical terms
-            self.generator = CandidateGenerator(self.symspell_words, self.vocab, radius=2, use_enhanced_vocab=True)
+            
+            # Enhanced: Load enhanced vocabulary with technical terms
+            from spelling.src.assets import load_enhanced_vocab
+            self.enhanced_vocab = load_enhanced_vocab(self.vocab, include_technical=True)
+            print(f"Enhanced vocabulary loaded: {len(self.enhanced_vocab)} words (including technical terms)")
+            
+            # Use enhanced vocab for all components
+            self.generator = CandidateGenerator(self.symspell_words, self.enhanced_vocab, radius=2, use_enhanced_vocab=True)
             self.ranker = AdvancedRanker(self.word_freqs)
-            self.nonword_detector = NonWordDetector(self.vocab)
-            self.realword_detector = RealWordDetector(self.vocab, self.word_freqs)
+            self.nonword_detector = NonWordDetector(self.enhanced_vocab)
+            self.realword_detector = RealWordDetector(self.enhanced_vocab, self.word_freqs)
             # Enhanced: Add mixed error handler for complex cases
             self.mixed_error_handler = MixedErrorHandler(
                 self.nonword_detector, self.realword_detector, self.generator
@@ -179,26 +185,40 @@ class SpellingCorrectionGUI:
                 # Clear previous highlighting (must be done in main thread)
                 self.root.after(0, self.clear_highlighting)
                 
-                # Tokenize text
-                tokens = tokenize(normalize(text))
+                # Tokenize text - use tokenize() without normalize() to preserve case
+                # This matches how test scripts use .split() which also preserves case
+                # The detector internally handles case conversion
+                tokens = tokenize(text)
                 
                 # FAST detection - only check alphabetic tokens
                 nonword_errors = []
                 realword_errors = []
+                compound_errors = []
                 
                 # Build confusion pairs set ONCE for O(1) lookups
                 confusion_set = set(self.realword_detector.confusion_pairs.keys())
                 
-                # Single pass through tokens (FAST)
+                # Single pass through tokens for non-word errors (FAST)
                 for i, token in enumerate(tokens):
                     if token.isalpha():
                         token_lower = token.lower()
                         
                         # Fast non-word check (vocabulary lookup only)
-                        if token_lower not in self.vocab:
+                        # Use enhanced_vocab to match test scripts
+                        if token_lower not in self.enhanced_vocab:
                             nonword_errors.append((i, token_lower))
-                        # Fast real-word check (only for known confusion pairs)
-                        elif token_lower in confusion_set:
+                
+                # Use the full context-aware real-word detection
+                # This is more accurate than just checking confusion_set membership
+                real_word_results = self.realword_detector.detect(tokens)
+                flags = real_word_results['flags']
+                compound_errors = real_word_results['compound_errors']
+                
+                for i, (token, is_error) in enumerate(zip(tokens, flags)):
+                    if is_error and token.isalpha():
+                        token_lower = token.lower()
+                        # Don't double-count non-word errors
+                        if token_lower in self.vocab:
                             realword_errors.append((i, token_lower))
                 
                 elapsed = time.time() - start_time
@@ -219,7 +239,9 @@ class SpellingCorrectionGUI:
                 results.append(f"Total tokens analyzed: {len([t for t in tokens if t.isalpha()])}")
                 results.append("")
                 results.append(f"Non-word errors found: {len(nonword_errors)}")
-                results.append(f"Real-word suspects found: {len(realword_errors)}")
+                results.append(f"Real-word errors found: {len(realword_errors)}")
+                if compound_errors:
+                    results.append(f"Compound word issues: {len(compound_errors)}")
                 results.append("")
                 
                 # Process non-word errors
@@ -237,16 +259,23 @@ class SpellingCorrectionGUI:
                 
                 # Process real-word errors
                 if realword_errors:
-                    results.append("REAL-WORD SUSPECTS (confusion pairs):")
+                    results.append("REAL-WORD ERRORS (words used in wrong context):")
                     for i, word in realword_errors:
                         suggestions = self.word_suggestions[word]
                         # Schedule highlighting in main thread
                         self.root.after(0, lambda w=word: self.highlight_word(w, "realword"))
                         
-                        results.append(f"• '{word}' (check context):")
+                        results.append(f"• '{word}' at position {i+1} (check context):")
                         for j, (suggestion, edit_dist) in enumerate(suggestions[:3], 1):
-                            results.append(f"  {j}. {suggestion}")
+                            results.append(f"  {j}. Consider: {suggestion}")
                         results.append("")
+                
+                # Process compound word errors
+                if compound_errors:
+                    results.append("COMPOUND WORD ISSUES (possible split words):")
+                    for idx, msg in compound_errors:
+                        results.append(f"• {msg}")
+                    results.append("")
                 
                 if not nonword_errors and not realword_errors:
                     results.append("✅ No spelling errors detected! Text looks good.")
@@ -261,8 +290,8 @@ class SpellingCorrectionGUI:
                     self.results_text.insert("1.0", "\n".join(results))
                     self.results_text.config(state=tk.DISABLED)
                     
-                    total_errors = len(nonword_errors + realword_errors)
-                    self.status_var.set(f"⚡ Fast analysis complete in {elapsed:.2f}s - Found {total_errors} potential errors")
+                    total_errors = len(nonword_errors) + len(realword_errors) + len(compound_errors)
+                    self.status_var.set(f"⚡ Analysis complete in {elapsed:.2f}s - Found {total_errors} potential errors")
                     self.check_button.config(state=tk.NORMAL, text="🔍 Check Spelling")
                 
                 self.root.after(0, update_results)
