@@ -220,7 +220,13 @@ def _lcs_distance(s1: str, s2: str) -> float:
     # Distance = 1 - (LCS length / max length)
     return 1.0 - (lcs_len / max_len) if max_len > 0 else 0.0
 
-def load_symspell_words(path=Path("spelling/data/processed/symspell_dict.txt")):
+def load_symspell_words(path=None):
+    """Load symspell dictionary with proper path resolution"""
+    if path is None:
+        # Get the directory where this file is located
+        module_dir = Path(__file__).parent  # spelling/src/
+        path = module_dir.parent / "data" / "processed" / "symspell_dict.txt"
+    
     words = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:

@@ -9,7 +9,11 @@ import sys
 import os
 import threading
 import time
-sys.path.append('spelling')
+
+# Add the script's directory to sys.path to ensure imports work from any location
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_dir)
+sys.path.insert(0, os.path.join(script_dir, 'spelling'))
 
 from spelling.src.assets import load_vocab, load_word_freq
 from spelling.src.candidates import load_symspell_words, CandidateGenerator  
@@ -34,6 +38,7 @@ class SpellingCorrectionGUI:
         # Track misspelled words
         self.misspelled_words = {}
         self.word_suggestions = {}
+        self.word_error_types = {}  # Track whether each word is 'misspelled' (non-word) or 'realword'
         
     def load_system(self):
         """Load the high-performance spelling correction system"""
@@ -226,11 +231,19 @@ class SpellingCorrectionGUI:
                 # Pre-generate suggestions for all errors (batch processing with context)
                 self.misspelled_words = {}
                 self.word_suggestions = {}
+                self.word_error_types = {}  # Reset error type tracking
                 
                 # Create a mapping of words to their positions for context
-                for i, word in nonword_errors + realword_errors:
+                # Also track the error type for each word
+                for i, word in nonword_errors:
                     if word not in self.word_suggestions:
                         self.word_suggestions[word] = self.get_suggestions_fast(word, tokens, i)
+                    self.word_error_types[word] = 'misspelled'  # Non-word error
+                
+                for i, word in realword_errors:
+                    if word not in self.word_suggestions:
+                        self.word_suggestions[word] = self.get_suggestions_fast(word, tokens, i)
+                    self.word_error_types[word] = 'realword'  # Real-word error
                 
                 results = []
                 results.append("=== FAST SPELLING ANALYSIS ===")
@@ -334,32 +347,53 @@ class SpellingCorrectionGUI:
     def get_suggestions_fast(self, word, context_tokens=None, index=-1):
         """FAST suggestion generation optimized for GUI speed with context"""
         try:
-            # Use enhanced candidate generation with context
-            candidates = self.generator.generate(word, use_symspell=True, aggressive=False, ultra=False, 
-                                               context_tokens=context_tokens, index=index)
+            word_lower = word.lower()
             
-            # For real-word errors, prioritize confusion pairs and contextual corrections
-            if word in self.realword_detector.confusion_pairs:
-                alternatives = self.realword_detector.confusion_pairs[word]
-                contextual_candidates = self.generator.get_contextual_candidates(word, context_tokens, index)
-                # Combine and prioritize contextual suggestions
-                priority_candidates = list(contextual_candidates) + list(alternatives)
-                candidates = priority_candidates + [c for c in candidates if c not in priority_candidates]
+            # ===== REAL-WORD ERROR HANDLING =====
+            # For real-word errors, prioritize confusion pairs FIRST - they are the correct answers!
+            if word_lower in self.realword_detector.confusion_pairs:
+                # Get the confusion pair alternatives (these are the CORRECT suggestions)
+                alternatives = self.realword_detector.confusion_pairs[word_lower]
+                
+                # Build result list with confusion pairs at the top
+                result = []
+                for alt in alternatives:
+                    edit_dist = Levenshtein.distance(word_lower, alt)
+                    result.append((alt, edit_dist))
+                
+                # Add a few more general candidates if needed (but confusion pairs stay on top)
+                if len(result) < 5:
+                    candidates = self.generator.generate(word_lower, use_symspell=True, aggressive=False, ultra=False)
+                    for cand in candidates[:5]:
+                        if cand not in alternatives:
+                            edit_dist = Levenshtein.distance(word_lower, cand)
+                            result.append((cand, edit_dist))
+                
+                return result[:8]
+            
+            # ===== NON-WORD ERROR HANDLING =====
+            # For non-word errors, use edit-distance based ranking
+            candidates = self.generator.generate(word_lower, use_symspell=True, aggressive=False, ultra=False, 
+                                               context_tokens=context_tokens, index=index)
             
             if not candidates:
                 return [("No suggestions found", 0)]
             
-            # Simple frequency-based ranking (fast - no context scoring)
+            # IMPROVED RANKING: Edit distance is PRIMARY, frequency is SECONDARY
+            import math
             candidates_scored = []
-            for candidate in candidates[:15]:
-                freq = self.word_freqs.get(candidate, 0)
-                edit_dist = Levenshtein.distance(word, candidate)
-                # Score = frequency boost - edit distance penalty
-                score = freq / 1000.0 - edit_dist
+            for candidate in candidates[:20]:  # Consider more candidates
+                freq = self.word_freqs.get(candidate, 1)
+                edit_dist = Levenshtein.distance(word_lower, candidate)
+                
+                freq_score = math.log(freq + 1) * 10  # Log scale to reduce frequency dominance
+                edit_penalty = edit_dist * 100  # Heavy penalty for each edit
+                score = freq_score - edit_penalty
+                
                 candidates_scored.append((candidate, edit_dist, score))
             
-            # Sort by score
-            candidates_scored.sort(key=lambda x: x[2], reverse=True)
+            # Sort by edit distance first (ascending), then by score (descending)
+            candidates_scored.sort(key=lambda x: (x[1], -x[2]))
             
             # Return top suggestions with edit distances
             return [(cand, dist) for cand, dist, score in candidates_scored[:8]]
@@ -460,13 +494,16 @@ class SpellingCorrectionGUI:
         self.text_editor.tag_remove("misspelled", "1.0", tk.END)
         self.text_editor.tag_remove("realword", "1.0", tk.END)
         
-        # Remove from word suggestions
+        # Remove from word suggestions and error type tracking
         if old_word in self.word_suggestions:
             del self.word_suggestions[old_word]
+        if old_word in self.word_error_types:
+            del self.word_error_types[old_word]
         
-        # Re-highlight remaining words
+        # Re-highlight remaining words with their CORRECT error type
         for word in self.word_suggestions.keys():
-            self.highlight_word(word, "misspelled")
+            error_type = self.word_error_types.get(word, 'misspelled')  # Default to misspelled if not found
+            self.highlight_word(word, error_type)
         
         # Update character count only
         self.on_text_change(None)
@@ -479,6 +516,7 @@ class SpellingCorrectionGUI:
         self.text_editor.tag_remove("realword", "1.0", tk.END)
         self.misspelled_words = {}
         self.word_suggestions = {}
+        self.word_error_types = {}  # Also clear error type tracking
     
     def show_vocabulary(self):
         """Show vocabulary browser window"""

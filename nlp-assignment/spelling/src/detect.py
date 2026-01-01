@@ -269,9 +269,10 @@ class RealWordDetector:
             'do': ['due', 'does'],
             'due': ['do', 'dew'],
             
-            # Our/are
+            # Our/are/hour
             'our': ['are', 'hour'],
             'are': ['our', 'ore'],
+            'hour': ['our', 'hours'],
             
             # Buy/by
             'buy': ['by', 'bye'],
@@ -1051,6 +1052,7 @@ class RealWordDetector:
                                  'computer', 'job', 'work', 'school', 'home', 'money', 'time']
             },
             'their': {
+                'wrong_if_before': ['over', 'from'],  # "over their" should be "over there"
                 'wrong_if_after': ['going', 'coming', 'running', 'walking', 'are', 'is', 'will', 'have', 'has']
             },
             
@@ -1342,6 +1344,42 @@ class RealWordDetector:
                 'wrong_if_after': []  # context after doesn't matter as much
             },
             
+            # Hour/Our - CRITICAL HOMOPHONE PAIR
+            # "hour" is wrong when followed by words that typically follow "our" (possessive)
+            # "hour" is correct when preceded by time-related words: "one hour", "per hour", "an hour"
+            'hour': {
+                'wrong_if_before': [],  # Removed - context before doesn't distinguish well
+                'wrong_if_after': ['health', 'team', 'house', 'car', 'dog', 'family', 'friends', 'work', 
+                                  'school', 'project', 'company', 'department', 'goal', 'mission',
+                                  'vision', 'values', 'strategy', 'plan', 'efforts', 'support']  # Added 'support'
+            },
+            # "our" is wrong when preceded by words that indicate time measurement
+            'our': {
+                'wrong_if_before': ['per', 'one', 'half', 'an', 'every', 'each', 'within', 'another', 'about'],
+                'wrong_if_after': ['ago', 'later', 'long', 'drive', 'flight', 'session', 'class', 'meeting']
+            },
+            
+            # Beech/Beach - HOMOPHONE PAIR
+            'beech': {
+                'wrong_if_before': ['the', 'to', 'at', 'on'],
+                'wrong_if_after': ['house', 'resort', 'vacation', 'trip', 'party', 'volleyball', 'towel',
+                                 'umbrella', 'sand', 'sun', 'water', 'ocean', 'sea', 'shore']
+            },
+            'beach': {
+                'wrong_if_before': ['the', 'a', 'an'],
+                'wrong_if_after': ['tree', 'trees', 'wood', 'forest', 'grove', 'leaf', 'leaves']
+            },
+            
+            # Bred/Bread - HOMOPHONE PAIR
+            'bred': {
+                'wrong_if_before': ['some', 'the', 'a', 'white', 'whole', 'wheat', 'rye', 'sourdough', 'fresh'],
+                'wrong_if_after': ['and', 'butter', 'crumbs', 'loaf', 'slice', 'box', 'basket']
+            },
+            'bread': {
+                'wrong_if_before': ['well', 'pure', 'cross'],
+                'wrong_if_after': ['for', 'to', 'by', 'with', 'from']
+            },
+            
             # Tail/Tale - HOMOPHONE PAIR
             # "tail" is correct in body part contexts, "tale" is correct for stories
             # Only flag "tail" when it appears in story contexts
@@ -1392,7 +1430,7 @@ class RealWordDetector:
             # Their/There/They're
             'your': ['your going', 'your coming', 'your welcome', 'your the', 'your a'],
             'there': ['there house', 'there car', 'there dog', 'there going', 'there coming'],
-            'their': ['their going', 'their coming', 'their is', 'their are'],
+            'their': ['their going', 'their coming', 'their is', 'their are', 'over their', 'from their'],
             
             # Its/It's
             'its': ['its time', 'its going', 'its about', 'its been', 'its not', 'its very'],
@@ -1460,6 +1498,16 @@ class RealWordDetector:
             
             # Form/From
             'form': ['form the', 'form here', 'form now', 'form this'],
+            
+            # Beech/Beach - location vs tree
+            'beech': ['to the beech', 'at the beech', 'on the beech', 'beech house', 'beech vacation', 
+                     'beech resort', 'beech trip', 'beech party', 'go to the beech'],
+            
+            # Hour/Our - time vs possession
+            'hour': ['hour team', 'hour house', 'hour family', 'hour friends', 'hour work', 
+                    'hour school', 'hour project', 'hour company', 'hour department', 'hour goal',
+                    'hour health', 'hour strategy', 'hour plan', 'hour efforts', 'hour support',
+                    'have hour', 'with hour', 'for hour'],  # Added more patterns
             
             # Advice/Advise
             'advice': ['will advice', 'please advice', 'to advice you'],
